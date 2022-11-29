@@ -18,7 +18,7 @@ import {
 } from './ngx-explorer-container.directive';
 
 @Directive({
-  selector: '[appExplorerDndTarget]',
+  selector: '[ngxExplorerDndTarget]',
   providers: [
     {
       provide: EXPLORER_DND_CONTAINER,
@@ -30,7 +30,7 @@ export class NgxExplorerTargetDirective implements OnInit, OnDestroy {
   private dragElementSubscription: Subscription = Subscription.EMPTY;
   private currentDragElement!: HTMLElement | null;
 
-  @Input('DndTargetData') data!: any;
+  @Input('dndTargetData') data!: any;
 
   constructor(
     private element: ElementRef,
@@ -43,7 +43,6 @@ export class NgxExplorerTargetDirective implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('PARENT');
     if (this._parentDrag) {
       this.dragElementSubscription = this.dndService
         .getDragElementSubject()
@@ -59,8 +58,6 @@ export class NgxExplorerTargetDirective implements OnInit, OnDestroy {
 
   @HostListener('mouseenter', ['$event'])
   onMouseEnter(ev: any) {
-    // Get operating system (e.g. 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36')
-    // console.log(navigator.userAgent);
     if (!this.currentDragElement) {
       ev.preventDefault();
       return;

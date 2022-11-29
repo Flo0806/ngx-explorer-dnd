@@ -64,7 +64,7 @@ export class NgxDragSelectionDirective {
   @Input() selectionAllowed: boolean = true;
 
   /** Set a custom selection div `HTMLElement`. */
-  @Input() selectionDivElement!: HTMLElement;
+  @Input() selectionDivElement!: HTMLElement | null | undefined;
 
   /** Event emitted when the selected elements are changed. */
   @Output() selectedElementsChange: EventEmitter<{
@@ -183,9 +183,7 @@ export class NgxDragSelectionDirective {
     @Inject(DOCUMENT) private _document: Document,
     @Inject(EXPLORER_DND_CONTAINER)
     private _parentDrag?: NgxExplorerContainerDirective
-  ) {
-    console.log(_parentDrag);
-  }
+  ) {}
 
   //#region HostListener
   @HostListener('document:mousedown', ['$event'])

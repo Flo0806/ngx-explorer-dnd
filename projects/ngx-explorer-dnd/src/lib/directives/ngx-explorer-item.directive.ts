@@ -26,7 +26,7 @@ export class NgxExplorerItemDirective<T = any> {
   htmlElement!: HTMLElement;
 
   /** Optional drag data. */
-  @Input('DndElementData') data!: T;
+  @Input('dndElementData') data!: any;
 
   constructor(
     private elementRef: ElementRef,
