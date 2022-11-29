@@ -1,6 +1,5 @@
 import { Component, QueryList, ViewChildren } from '@angular/core';
 import { FileFolder } from 'ngx-explorer-dnd';
-import { FileFolderType } from 'projects/ngx-explorer-dnd/src/public-api';
 
 @Component({
   selector: 'app-root',
@@ -39,5 +38,9 @@ export class AppComponent {
     for (let _data of event.data) {
       _data.selected = true;
     }
+  }
+
+  drop(event: any) {
+    console.log(event);
   }
 }

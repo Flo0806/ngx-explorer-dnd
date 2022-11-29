@@ -7,7 +7,18 @@
   badge="3"
   ngxDragSelection
   [selectionDivElement]="myElement"
+  (drop)="drop($event)"
 >
-  <app-file ngxExplorerDndElement *ngFor="let item of files"> </app-file>
-  <app-folder ngxExplorerDndElement *ngFor="let item of files"></app-folder>
+  <app-file
+    ngxExplorerDndElement
+    [dndElementData]="item"
+    *ngFor="let item of files"
+  >
+  </app-file>
+  <app-folder
+    ngxExplorerDndElement
+    ngxExplorerDndTarget
+    [dndTargetData]="item"
+    *ngFor="let item of directories"
+  ></app-folder>
 </div>
