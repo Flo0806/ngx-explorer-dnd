@@ -11,6 +11,7 @@ import {
   SkipSelf,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { FileFolder } from '../core/file-folder';
 import { DndService } from '../services/dnd.service';
 import {
   EXPLORER_DND_CONTAINER,
@@ -39,7 +40,9 @@ export class NgxExplorerTargetDirective implements OnInit, OnDestroy {
     @Optional()
     @SkipSelf()
     @Inject(EXPLORER_DND_CONTAINER)
-    private _parentDrag?: NgxExplorerContainerDirective
+    private _parentDrag?: NgxExplorerContainerDirective,
+    @Optional()
+    private host?: FileFolder
   ) {}
 
   ngOnInit(): void {
@@ -82,5 +85,10 @@ export class NgxExplorerTargetDirective implements OnInit, OnDestroy {
       'dnd-target-highlight'
     );
     this._parentDrag?.setCurrentTarget(null);
+  }
+
+  /** Return the host component. */
+  getHostComponent() {
+    return this.host;
   }
 }

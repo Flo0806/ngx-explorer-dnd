@@ -64,11 +64,19 @@ export class NgxExplorerContainerDirective<T = any>
     optionalDragData?: any;
   }> = new EventEmitter<{ item: any; target: any; optionalDragData?: any }>();
 
+  /** Event emitted when a target under the mouse will change */
+  @Output() targetChange: EventEmitter<{ target: any }> = new EventEmitter<{
+    target: any;
+  }>();
+
   /** Set optional data to the dragged element. */
   @Input() dragData!: any;
 
   /** Set a optional badge to the dragged element e.g. 2 if you drag multiple files. */
   @Input() badge!: string | null;
+
+  /** cancel move back animation after `mouseup` event */
+  @Input() cancelAnimation: boolean = false;
 
   //#region Helper
   /** Deep clone the current element for a preview element. */
@@ -333,11 +341,16 @@ export class NgxExplorerContainerDirective<T = any>
 
       event.preventDefault();
       event.stopPropagation();
-      setTimeout(() => {
-        if (this.previewElement)
-          this._document.body.removeChild(this.previewElement);
+      if (!this.cancelAnimation) {
+        setTimeout(() => {
+          if (this.previewElement)
+            this._document.body.removeChild(this.previewElement);
+          this.previewElement = null;
+        }, 201);
+      } else {
+        this._document.body.removeChild(this.previewElement);
         this.previewElement = null;
-      }, 201);
+      }
       this.dragInProgress.emit(false);
     }
   };
@@ -351,6 +364,7 @@ export class NgxExplorerContainerDirective<T = any>
   /** `ngx-explorer-target` will call this method to register itself as target on mouseenter */
   setCurrentTarget(element: NgxExplorerTargetDirective | null) {
     this._currentTargetElement = element;
+    this.targetChange.emit({ target: element?.getHostComponent() });
   }
   //#endregion
 }

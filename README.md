@@ -123,28 +123,30 @@ Here are the properties and Events of the directives we have:
 
 #
 
-| Directive               |      Property       |         Type          |                    Description                     |
-| ----------------------- | :-----------------: | :-------------------: | :------------------------------------------------: |
-| ngxExplorerDndContainer |      dragData       |          any          |    Add any optional data for the `drop` event.     |
-| ngxExplorerDndContainer |        badge        | string _or_ undefined | If set it shows a custom badge inside drag preview |
-| ngxDragSelection        |  selectionAllowed   |        boolean        |      Set if the selection rect can be showed       |
-| ngxDragSelection        | selectionDivElement | HTMLElement _or_ null |   Set a custom selection rect with custom styles   |
-| ngxExplorerDndElement   |   dndElementData    |          any          |       Any optional data for the `drop` event       |
-| ngxExplorerDndTarget    |    dndTargetData    |          any          |       Any optional data for the `drop` event       |
+| Directive               |      Property       |         Type          |                     Description                     |
+| ----------------------- | :-----------------: | :-------------------: | :-------------------------------------------------: |
+| ngxExplorerDndContainer |      dragData       |          any          |     Add any optional data for the `drop` event.     |
+| ngxExplorerDndContainer |        badge        | string _or_ undefined | If set it shows a custom badge inside drag preview. |
+| ngxExplorerDndContainer |   cancelAnimation   |        boolean        | If set to true it cancel the `move back` animation. |
+| ngxDragSelection        |  selectionAllowed   |        boolean        |      Set if the selection rect can be showed.       |
+| ngxDragSelection        | selectionDivElement | HTMLElement _or_ null |   Set a custom selection rect with custom styles.   |
+| ngxExplorerDndElement   |   dndElementData    |          any          |       Any optional data for the `drop` event.       |
+| ngxExplorerDndTarget    |    dndTargetData    |          any          |       Any optional data for the `drop` event.       |
 
 ##### Events
 
 #
 
-| Directive               |        Property        |                               Type                               |                    Description                     |
-| ----------------------- | :--------------------: | :--------------------------------------------------------------: | :------------------------------------------------: |
-| ngxExplorerDndContainer |     dragInProgress     |                      EventEmitter<boolean>                       |      Emitted when drag progress was started.       |
-| ngxExplorerDndContainer |          drop          | EventEmitter<{ item: any, target: any, oprionalDragData?: any }> | Occurs on `ngxExplorerDndElement` will be dropped. |
-| ngxDragSelection        | selectedElementsChange |      EventEmitter<{ count: number, data: `FileFolder[]` }>       |     Occurs when selected Elements are changed.     |
+| Directive               |         Event          |                               Type                               |                             Description                             |
+| ----------------------- | :--------------------: | :--------------------------------------------------------------: | :-----------------------------------------------------------------: |
+| ngxExplorerDndContainer |     dragInProgress     |                      EventEmitter<boolean>                       |               Emitted when drag progress was started.               |
+| ngxExplorerDndContainer |          drop          | EventEmitter<{ item: any, target: any, oprionalDragData?: any }> |         Occurs on `ngxExplorerDndElement` will be dropped.          |
+| ngxExplorerDndContainer |      targetChange      |                  EventEmitter<{ target: any }>                   | Occurs on any `ngxExplorerDndTarget` is under mouse while dragging. |
+| ngxDragSelection        | selectedElementsChange |      EventEmitter<{ count: number, data: `FileFolder[]` }>       |             Occurs when selected Elements are changed.              |
 
 ## Example
 
-A example says more than 1000 words. So play around with [Stackblitz][df1]!
+A example says more than 1000 words. So play around with [Stackblitz][sb]!
 
 ## Authors
 
@@ -158,5 +160,5 @@ A example says more than 1000 words. So play around with [Stackblitz][df1]!
 
 If you like the project so rate it! 😎
 
-[df1]: http://daringfireball.net/projects/markdown/
+[sb]: https://stackblitz.com/edit/angular-ivy-wsegkg?file=src/app/app.component.ts/
 [mit]: https://andreasonny.mit-license.org/2019

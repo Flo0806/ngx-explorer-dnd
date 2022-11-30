@@ -1,3 +1,5 @@
+import { ElementRef } from '@angular/core';
+
 /** Enum of the type of the FileFolder class. */
 export enum FileFolderType {
   File,
