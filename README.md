@@ -6,6 +6,9 @@
 - Drag & Drop single or multiple files and folders
 - ✨Magic ✨
 
+![dnd-explorer-dnd-gif](https://user-images.githubusercontent.com/10813063/204743417-e1503da6-c9a2-4e76-bbe7-206b528520df.gif)
+
+
 ## Getting Started
 
 ### Installation
