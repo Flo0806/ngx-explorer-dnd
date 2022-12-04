@@ -18,11 +18,11 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.schematics.json",
-    "postbuild": "copyfiles schematics/*/schema.json schematics/*/files/** schematics/collection.json ../../dist/ngx-explorer-dnd/"
+    "postbuild": "copyfiles schematics/*/schema.json schematics/*/files/** schematics/collection.json ../dist/ngx-explorer-dnd/"
   },
   "devDependencies": {
-    "copyfiles": "file:../../node_modules/copyfiles",
-    "typescript": "file:../../node_modules/typescript"
+    "copyfiles": "file:../node_modules/copyfiles",
+    "typescript": "file:../node_modules/typescript"
   },
   "schematics": "./schematics/collection.json",
   "ng-add": {
