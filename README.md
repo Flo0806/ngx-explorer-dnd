@@ -154,12 +154,12 @@ Here are the properties and Events of the directives we have:
 
 #
 
-| Directive               |         Event          |                                      Type                                       |                             Description                             |
-| ----------------------- | :--------------------: | :-----------------------------------------------------------------------------: | :-----------------------------------------------------------------: | ------- | -------------------------------------------------- |
-| ngxExplorerDndContainer |     dragInProgress     |                              EventEmitter<boolean>                              |               Emitted when drag progress was started.               |
-| ngxExplorerDndContainer |          drop          | EventEmitter<{ item: any, target: any, oprionalDragData?: any, oldIndex: number |                       null, newIndex: number                        | null }> | Occurs on `ngxExplorerDndElement` will be dropped. |
-| ngxExplorerDndContainer |      targetChange      |                          EventEmitter<{ target: any }>                          | Occurs on any `ngxExplorerDndTarget` is under mouse while dragging. |
-| ngxDragSelection        | selectedElementsChange |              EventEmitter<{ count: number, data: `FileFolder[]` }>              |             Occurs when selected Elements are changed.              |
+| Directive               |         Event          |                                                             Type                                       |                             Description                             |
+| ----------------------- | :--------------------: | :----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------: |
+| ngxExplorerDndContainer |     dragInProgress     |                              EventEmitter<boolean>                                                     |               Emitted when drag progress was started.               |
+| ngxExplorerDndContainer |          drop          | EventEmitter<{ item: any, target: any, oprionalDragData?: any, oldIndex?: number, newIndex?: number }> | Occurs on `ngxExplorerDndElement` will be dropped.                  |
+| ngxExplorerDndContainer |      targetChange      |                          EventEmitter<{ target: any }>                                                 | Occurs on any `ngxExplorerDndTarget` is under mouse while dragging. |
+| ngxDragSelection        | selectedElementsChange |              EventEmitter<{ count: number, data: `FileFolder[]` }>                                     |             Occurs when selected Elements are changed.              |
 
 ## Example
 
