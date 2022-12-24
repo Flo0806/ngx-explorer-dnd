@@ -4,15 +4,17 @@
   (dragInProgress)="dragInProgress($event)"
   (selectedElementsChange)="selectedElementsChange($event)"
   [selectionAllowed]="!isDragInProgress"
-  badge="3"
+  [sortingEnabled]="true"
   ngxDragSelection
   [selectionDivElement]="myElement"
   (drop)="drop($event)"
+  style="position: relative"
 >
   <app-file
     ngxExplorerDndElement
     [dndElementData]="item"
     *ngFor="let item of files"
+    [fileName]="item"
   >
   </app-file>
   <app-folder

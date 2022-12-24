@@ -7,7 +7,7 @@
     "url": "https://github.com/Flo0806/ngx-explorer-dnd.git"
   },
   "license": "MIT",
-  "version": "1.0.0-alpha.9",
+  "version": "1.0.0-alpha.10",
   "peerDependencies": {
     "@angular/common": "^15.0.0",
     "@angular/core": "^15.0.0",
@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.schematics.json",
-    "postbuild": "copyfiles schematics/*/schema.json schematics/*/files/** schematics/collection.json ../dist/ngx-explorer-dnd/"
+    "postbuild": "copyfiles schematics/*/schema.json schematics/*/files/** schematics/collection.json ../../dist/ngx-explorer-dnd/"
   },
   "devDependencies": {
     "copyfiles": "file:../node_modules/copyfiles",
@@ -34,6 +34,9 @@
     "explorer",
     "mouse selection",
     "drag and drop",
-    "angular"
+    "drag n drop",
+    "drag 'n drop",
+    "angular",
+    "drag grid"
   ]
 }

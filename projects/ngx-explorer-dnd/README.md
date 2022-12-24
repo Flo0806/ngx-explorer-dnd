@@ -4,7 +4,13 @@
 
 - Select with mouse (selection rect)
 - Drag & Drop single or multiple files and folders
-- ✨Magic ✨
+- Sorting components in a grid **new**
+- Feel the ✨magic✨
+- Test it on [Stackblitz][sb]!
+
+![dnd-explorer-dnd-gif](https://user-images.githubusercontent.com/10813063/204743417-e1503da6-c9a2-4e76-bbe7-206b528520df.gif)
+
+![sort-grid](https://user-images.githubusercontent.com/10813063/209434349-01c7127b-550a-4e0c-bb38-38af167501d3.gif)
 
 ## Getting Started
 
@@ -14,6 +20,12 @@ Install the ngx-explorer-dnd package from **npm**
 
 ```
 npm install ngx-explorer-dnd --save
+```
+
+or use **ng add**
+
+```
+ng add ngx-explorer-dnd
 ```
 
 ### Usage
@@ -36,6 +48,10 @@ Add the `ngxExplorerDndContainer` directive to your container component. If you 
   <app-folder ngxExplorerDndElement *ngFor="let item of files"></app-folder>
 </div>
 ```
+
+###### Sorting Function
+
+If you wanna enable sorting so add the `enableSorting` property to the `ngxExplorerDndElement` and set it to `true`.
 
 ##### Code Behind
 
@@ -128,6 +144,7 @@ Here are the properties and Events of the directives we have:
 | ngxExplorerDndContainer |      dragData       |          any          |     Add any optional data for the `drop` event.     |
 | ngxExplorerDndContainer |        badge        | string _or_ undefined | If set it shows a custom badge inside drag preview. |
 | ngxExplorerDndContainer |   cancelAnimation   |        boolean        | If set to true it cancel the `move back` animation. |
+| ngxExplorerDndContainer |    enableSorting    |        boolean        |         If set to true sorting is enabled.          |
 | ngxDragSelection        |  selectionAllowed   |        boolean        |      Set if the selection rect can be showed.       |
 | ngxDragSelection        | selectionDivElement | HTMLElement _or_ null |   Set a custom selection rect with custom styles.   |
 | ngxExplorerDndElement   |   dndElementData    |          any          |       Any optional data for the `drop` event.       |
@@ -137,16 +154,21 @@ Here are the properties and Events of the directives we have:
 
 #
 
-| Directive               |         Event          |                               Type                               |                             Description                             |
-| ----------------------- | :--------------------: | :--------------------------------------------------------------: | :-----------------------------------------------------------------: |
-| ngxExplorerDndContainer |     dragInProgress     |                      EventEmitter<boolean>                       |               Emitted when drag progress was started.               |
-| ngxExplorerDndContainer |          drop          | EventEmitter<{ item: any, target: any, oprionalDragData?: any }> |         Occurs on `ngxExplorerDndElement` will be dropped.          |
-| ngxExplorerDndContainer |      targetChange      |                  EventEmitter<{ target: any }>                   | Occurs on any `ngxExplorerDndTarget` is under mouse while dragging. |
-| ngxDragSelection        | selectedElementsChange |      EventEmitter<{ count: number, data: `FileFolder[]` }>       |             Occurs when selected Elements are changed.              |
+| Directive               |         Event          |                                      Type                                       |                             Description                             |
+| ----------------------- | :--------------------: | :-----------------------------------------------------------------------------: | :-----------------------------------------------------------------: | ------- | -------------------------------------------------- |
+| ngxExplorerDndContainer |     dragInProgress     |                              EventEmitter<boolean>                              |               Emitted when drag progress was started.               |
+| ngxExplorerDndContainer |          drop          | EventEmitter<{ item: any, target: any, oprionalDragData?: any, oldIndex: number |                       null, newIndex: number                        | null }> | Occurs on `ngxExplorerDndElement` will be dropped. |
+| ngxExplorerDndContainer |      targetChange      |                          EventEmitter<{ target: any }>                          | Occurs on any `ngxExplorerDndTarget` is under mouse while dragging. |
+| ngxDragSelection        | selectedElementsChange |              EventEmitter<{ count: number, data: `FileFolder[]` }>              |             Occurs when selected Elements are changed.              |
 
 ## Example
 
 A example says more than 1000 words. So play around with [Stackblitz][sb]!
+
+## Version History
+
+- Alpha 10: _Added sorting functionality_
+- Alpha 1 to 9: _First release and bug fixes_
 
 ## Authors
 
@@ -158,7 +180,7 @@ A example says more than 1000 words. So play around with [Stackblitz][sb]!
 
 ## Last But Not Least
 
-If you like the project so rate it! 😎
+If you like the project so give it a star! 😎
 
 [sb]: https://stackblitz.com/edit/angular-ivy-wsegkg?file=src/app/app.component.ts/
 [mit]: https://andreasonny.mit-license.org/2019

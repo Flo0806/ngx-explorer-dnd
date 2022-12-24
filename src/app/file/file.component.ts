@@ -1,4 +1,4 @@
-import { Component, forwardRef } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import { FileFolder } from 'ngx-explorer-dnd';
 
 @Component({
@@ -9,4 +9,6 @@ import { FileFolder } from 'ngx-explorer-dnd';
     { provide: FileFolder, useExisting: forwardRef(() => FileComponent) },
   ],
 })
-export class FileComponent extends FileFolder {}
+export class FileComponent extends FileFolder {
+  @Input() fileName: string = '';
+}

@@ -11,6 +11,11 @@ import {
   Output,
 } from '@angular/core';
 import { extendStyles } from '../core/css-helper';
+import {
+  DragRowPosition,
+  SameDragRow,
+  Translate3DPosition,
+} from '../core/utils';
 import { DndService } from '../services/dnd.service';
 import { NgxExplorerItemDirective } from './ngx-explorer-item.directive';
 import { NgxExplorerTargetDirective } from './ngx-explorer-target.directive';
@@ -51,8 +56,23 @@ export class NgxExplorerContainerDirective<T = any>
   /** The position of the dragged element. */
   private position!: any;
 
+  /** If sorting is enabled the new position of the dragged element is stored here to handle correct drop animation. */
+  private positionDifference!: any;
+
   /** The start position of the mouse when beginning dragging. */
   private startPosition!: any;
+
+  /** A unsorted list of all registered components */
+  private unsortedItems: {
+    htmlElement: HTMLElement;
+    posData: { x: number; y: number; width: number; height: number };
+  }[] = [];
+
+  /** A sorted list of all registered components (sorted by position in the DOM) */
+  private sortedItems: {
+    htmlElement: HTMLElement;
+    posData: { x: number; y: number; width: number; height: number };
+  }[] = [];
 
   /** Event emitted when the drag progress was started. */
   @Output() dragInProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -62,6 +82,8 @@ export class NgxExplorerContainerDirective<T = any>
     item: any;
     target: any;
     optionalDragData?: any;
+    oldIndex?: number;
+    newIndex?: number;
   }> = new EventEmitter<{ item: any; target: any; optionalDragData?: any }>();
 
   /** Event emitted when a target under the mouse will change */
@@ -75,8 +97,11 @@ export class NgxExplorerContainerDirective<T = any>
   /** Set a optional badge to the dragged element e.g. 2 if you drag multiple files. */
   @Input() badge!: string | null;
 
-  /** cancel move back animation after `mouseup` event */
+  /** Cancel move back animation after `mouseup` event */
   @Input() cancelAnimation: boolean = false;
+
+  /** Can the file/folder components are sorted */
+  @Input() sortingEnabled: boolean = false;
 
   //#region Helper
   /** Deep clone the current element for a preview element. */
@@ -111,6 +136,369 @@ export class NgxExplorerContainerDirective<T = any>
     }
 
     return clone;
+  }
+
+  /** Hide/show the dragged component */
+  toggleVisibility(element: HTMLElement, visible: boolean) {
+    extendStyles(element.style, {
+      opacity: visible ? '0' : '',
+      // position: visible ? 'fixed' : '',
+      // left: visible ? '0' : '',
+      // top: visible ? '-500em' : '',
+    });
+  }
+
+  /** Creates a list with all registered components and their positions */
+  createUnsortedList() {
+    const unsortedItems: any[] = [];
+    // All registered components
+    for (let data of this._dragElements) {
+      const clientRect = data.htmlElement.getBoundingClientRect();
+      const posData = {
+        x: clientRect.x,
+        y: clientRect.y,
+        width: clientRect.width,
+        height: clientRect.height,
+      };
+      unsortedItems.push({ htmlElement: data.htmlElement, posData });
+    }
+
+    return unsortedItems;
+  }
+
+  /** Gets the registered items in the list, sorted by their position in the DOM. */
+  getSortedItems(): any[] {
+    return Array.from(this.createUnsortedList()).sort((a: any, b: any) => {
+      const documentPosition = a.htmlElement.compareDocumentPosition(
+        b.htmlElement
+      );
+
+      // `compareDocumentPosition` returns a bitmask so we have to use a bitwise operator.
+      // https://developer.mozilla.org/en-US/docs/Web/API/Node/compareDocumentPosition
+      // tslint:disable-next-line:no-bitwise
+      return documentPosition & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+  }
+
+  /** Check if the element has a translate3d style and returns the "real" values of x, y, width and height. */
+  getCurrentPositionInclusiveTranslate3d(
+    element: HTMLElement
+  ): Translate3DPosition {
+    const rect = element.getBoundingClientRect();
+    let translateX = 0,
+      translateY = 0;
+    if (element.style.transform) {
+      translateX =
+        +element.style.transform
+          .replace(/translate3d|px|\(|\)/gi, '')
+          .split(',')[0] || 0;
+      translateY =
+        +element.style.transform
+          .replace(/translate3d|px|\(|\)/gi, '')
+          .split(',')[1] || 0;
+    }
+
+    return {
+      startX: rect.x - translateX,
+      startY: rect.y - translateY,
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      halfWidthX: rect.x + rect.width / 2,
+      halfHeightY: rect.y + rect.height / 2,
+    };
+  }
+
+  /** Checks goes the new position of the element outside of the parent and set new row position */
+  needToMoveUpOrDown(
+    parentRect: DOMRect,
+    indexOfElement: number,
+    addDirection: number
+  ): { transX: string; transY: string } | boolean {
+    let transX: string = '0px',
+      transY: string = '0px';
+    let posChanged = false;
+
+    const currentElement = this.sortedItems[indexOfElement];
+
+    if (
+      currentElement.posData.x + addDirection < parentRect.x &&
+      indexOfElement > 0
+    ) {
+      transX =
+        this.sortedItems[indexOfElement - 1].posData.x -
+        this.sortedItems[indexOfElement].posData.x +
+        'px';
+      transY =
+        this.sortedItems[indexOfElement - 1].posData.y -
+        this.sortedItems[indexOfElement].posData.y +
+        'px';
+      posChanged = true;
+    } else if (
+      currentElement.posData.x + currentElement.posData.width + addDirection >
+      parentRect.x + parentRect.width
+    ) {
+      transX =
+        this.sortedItems[indexOfElement + 1].posData.x -
+        this.sortedItems[indexOfElement].posData.x +
+        'px';
+      transY =
+        this.sortedItems[indexOfElement + 1].posData.y -
+        this.sortedItems[indexOfElement].posData.y +
+        'px';
+      posChanged = true;
+    }
+
+    return posChanged ? { transX, transY } : false;
+  }
+
+  /** Set the position of the dragged element */
+  setCurrentPositionOfDraggedElement(
+    draggedElement: HTMLElement | undefined,
+    mousePosition: { x: number; y: number }
+  ) {
+    if (!draggedElement) return;
+
+    const parentRect = draggedElement.parentElement?.getBoundingClientRect();
+    if (!parentRect) return;
+
+    // Intern helpers ------------------------------------------
+    /** If the cursor moving in same row like the dragged element */
+    const isInSameLine = (): SameDragRow => {
+      const el = draggedElement.getBoundingClientRect();
+
+      if (mousePosition.y >= el.y && mousePosition.y <= el.y + el.height)
+        return {
+          sameRow: true,
+          dragRowPosition: DragRowPosition.SAME,
+          sameLineAsMouse: DragRowPosition.UNDEFINED,
+        };
+      else if (mousePosition.y < el.y)
+        return {
+          sameRow: false,
+          dragRowPosition: DragRowPosition.SMALLER,
+          sameLineAsMouse: DragRowPosition.UNDEFINED,
+        };
+      else
+        return {
+          sameRow: false,
+          dragRowPosition: DragRowPosition.GREATER,
+          sameLineAsMouse: DragRowPosition.UNDEFINED,
+        };
+    };
+
+    /** If the element is in the same line as the dragged element */
+    const amIAtTheSameRow = (y: number, height?: number): SameDragRow => {
+      const el = draggedElement.getBoundingClientRect();
+      let mouseRowPosition: DragRowPosition = DragRowPosition.UNDEFINED;
+
+      if (height) {
+        if (mousePosition.y > y + height)
+          mouseRowPosition = DragRowPosition.SMALLER;
+        else if (mousePosition.y < y)
+          mouseRowPosition = DragRowPosition.GREATER;
+        else if (mousePosition.y >= y && mousePosition.y <= y + height)
+          mouseRowPosition = DragRowPosition.SAME;
+      }
+
+      if (y === el.y) {
+        return {
+          sameRow: true,
+          dragRowPosition: DragRowPosition.SAME,
+          sameLineAsMouse: mouseRowPosition,
+        };
+      } else if (y > el.y) {
+        return {
+          sameRow: false,
+          dragRowPosition: DragRowPosition.GREATER,
+          sameLineAsMouse: mouseRowPosition,
+        };
+      } else {
+        return {
+          sameRow: false,
+          dragRowPosition: DragRowPosition.SMALLER,
+          sameLineAsMouse: mouseRowPosition,
+        };
+      }
+    };
+
+    // Mouse is right to new elmement
+    const isRightToElement = (halfWidth: number): boolean => {
+      if (mousePosition.x > halfWidth) return true;
+      return false;
+    };
+
+    // Mouse is left to new element
+    const isLeftToElement = (halfWidth: number): boolean => {
+      if (mousePosition.x < halfWidth) return true;
+      return false;
+    };
+
+    /** If the start position of the current element before `true`or after `false` the dragged element */
+    const posIsBeforeDraggedElement = (x: number, y?: number) => {
+      const el = draggedElement.getBoundingClientRect();
+
+      if (y) {
+        if (y < el.y) return true;
+        if (y > el.y) return false;
+
+        if (x < el.x && y === el.y) return true;
+        return false;
+      }
+      if (x < el.x) return true;
+      return false;
+    };
+    // ---------------------------------------------------------
+
+    // Only if the mouse is inside the parent
+    if (
+      mousePosition.x >= parentRect.x &&
+      mousePosition.x <= parentRect.x + parentRect?.width &&
+      mousePosition.y >= parentRect.y &&
+      mousePosition.y <= parentRect.y + parentRect?.height
+    ) {
+      const draggedRect = draggedElement.getBoundingClientRect();
+      this.positionDifference = { ...this.position };
+
+      let index = 0; // Index of the current unsorted item
+      for (let element of this.sortedItems) {
+        if (element.htmlElement !== draggedElement) {
+          const rect = this.getCurrentPositionInclusiveTranslate3d(
+            element.htmlElement
+          );
+
+          // if (
+          //   element.htmlElement.getAttribute('ng-reflect-file-name') &&
+          //   element.htmlElement.getAttribute('ng-reflect-file-name') ===
+          //     'File 6'
+          // ) {
+          //console.log(rect.x, rect.startX, rect.startY);
+          // console.log(
+          //   mousePosition.x,
+          //   rect.halfWidthX,
+          //   rect.startX,
+          //   mousePosition.y,
+          //   rect.startY,
+          //   rect.startY + rect.height
+          // );
+          // }
+
+          let translateXValue = '0px',
+            translateYValue = '0px';
+
+          // Part: in same line
+          // Are the current elements all in the same line as the dragged element, handle it here
+          if (
+            isInSameLine().sameRow &&
+            amIAtTheSameRow(rect.y).sameRow &&
+            isLeftToElement(rect.halfWidthX) &&
+            posIsBeforeDraggedElement(rect.startX)
+          ) {
+            translateXValue = draggedRect.width + 'px';
+          } else if (
+            isInSameLine().sameRow &&
+            amIAtTheSameRow(rect.y).sameRow &&
+            isRightToElement(rect.halfWidthX) &&
+            !posIsBeforeDraggedElement(rect.startX)
+          ) {
+            translateXValue = -draggedRect.width + 'px';
+          }
+
+          // Part: in other line
+          // Are the current elements are greater or smaller than the dragged element, handle it here
+          if (!isInSameLine().sameRow) {
+            // Check all elements their position are smaller then the current
+            if (isInSameLine().dragRowPosition == DragRowPosition.GREATER) {
+              // Mouse goes under the dragged element; all elements they are greater as dragged element, but smaller/same as mouse will be handled here
+              if (
+                (amIAtTheSameRow(rect.y).dragRowPosition ===
+                  DragRowPosition.GREATER ||
+                  amIAtTheSameRow(rect.y).dragRowPosition ===
+                    DragRowPosition.SAME) &&
+                (amIAtTheSameRow(rect.y, rect.height).sameLineAsMouse ===
+                  DragRowPosition.SAME ||
+                  amIAtTheSameRow(rect.y, rect.height).sameLineAsMouse ===
+                    DragRowPosition.SMALLER) &&
+                !posIsBeforeDraggedElement(rect.startX, rect.startY)
+              ) {
+                if (
+                  isRightToElement(rect.halfWidthX) ||
+                  amIAtTheSameRow(rect.y).dragRowPosition ==
+                    DragRowPosition.SAME ||
+                  (amIAtTheSameRow(rect.y).dragRowPosition ==
+                    DragRowPosition.GREATER &&
+                    amIAtTheSameRow(rect.y, rect.height).sameLineAsMouse !==
+                      DragRowPosition.SAME)
+                ) {
+                  translateXValue = -draggedRect.width + 'px';
+                }
+              }
+            } else if (
+              isInSameLine().dragRowPosition == DragRowPosition.SMALLER
+            ) {
+              if (
+                (amIAtTheSameRow(rect.y).dragRowPosition ===
+                  DragRowPosition.SMALLER ||
+                  amIAtTheSameRow(rect.y).dragRowPosition ===
+                    DragRowPosition.SAME) &&
+                (amIAtTheSameRow(rect.y, rect.height).sameLineAsMouse ===
+                  DragRowPosition.SAME ||
+                  amIAtTheSameRow(rect.y, rect.height).sameLineAsMouse ===
+                    DragRowPosition.GREATER) &&
+                posIsBeforeDraggedElement(rect.startX, rect.startY)
+              ) {
+                if (
+                  isLeftToElement(rect.halfWidthX) ||
+                  amIAtTheSameRow(rect.y).dragRowPosition ==
+                    DragRowPosition.SAME ||
+                  (amIAtTheSameRow(rect.y).dragRowPosition ==
+                    DragRowPosition.SMALLER &&
+                    amIAtTheSameRow(rect.y, rect.height).sameLineAsMouse !==
+                      DragRowPosition.SAME)
+                ) {
+                  translateXValue = draggedRect.width + 'px';
+                }
+              }
+            }
+          }
+
+          // Check goes any element outside the parent. So change it's row position
+          const checkNeedToMoveUpOrDown = this.needToMoveUpOrDown(
+            parentRect,
+            index,
+            +translateXValue.replace('px', '')
+          );
+          if (checkNeedToMoveUpOrDown) {
+            translateXValue = (<{ transX: string; transY: string }>(
+              checkNeedToMoveUpOrDown
+            )).transX;
+            translateYValue = (<{ transX: string; transY: string }>(
+              checkNeedToMoveUpOrDown
+            )).transY;
+          }
+
+          extendStyles(element.htmlElement.style, {
+            transform: `translate3d(${translateXValue},${translateYValue},0)`,
+          });
+        }
+
+        index++;
+      }
+    }
+  }
+
+  /** Removes the transform3d positions from all elements */
+  resetPositions(draggedElement: HTMLElement | undefined) {
+    if (!draggedElement) return;
+
+    for (let element of this.unsortedItems) {
+      if (element.htmlElement !== draggedElement) {
+        extendStyles(element.htmlElement.style, {
+          transform: '',
+        });
+      }
+    }
   }
 
   /** Set the position of the preview element */
@@ -186,6 +574,49 @@ export class NgxExplorerContainerDirective<T = any>
     })?.htmlElement;
   }
 
+  /** Get the current index of the dragged element in the unsorted list */
+  getCurrentIndexPosition(
+    lastMouseX: number,
+    lastMouseY: number,
+    draggedElement: HTMLElement
+  ): { x: number; y: number; oldIndex: number; newIndex: number } | undefined {
+    const parentRect = draggedElement.parentElement?.getBoundingClientRect();
+    let currentPosition = undefined;
+    if (parentRect) {
+      let newIndex = 0,
+        oldIndex = 0;
+      for (let elIndex = 0; elIndex < this.sortedItems.length; elIndex++) {
+        if (this.sortedItems[elIndex].htmlElement === draggedElement) {
+          oldIndex = elIndex;
+          break;
+        }
+      }
+
+      for (let el of this.sortedItems) {
+        if (el.htmlElement !== draggedElement) {
+          // Mouse has position of Object
+          if (
+            lastMouseX >= el.posData.x &&
+            lastMouseX <= el.posData.x + el.posData.width &&
+            lastMouseY >= el.posData.y &&
+            lastMouseY <= el.posData.y + el.posData.height
+          ) {
+            currentPosition = {
+              x: el.posData.x,
+              y: el.posData.y,
+              oldIndex,
+              newIndex,
+            };
+            break;
+          }
+        }
+        newIndex++;
+      }
+    }
+
+    return currentPosition;
+  }
+
   /** Returns a list of all elements of type `NgxExplorerItemDirective` they are inside a specific rect. */
   getElementsInsideSelectionDiv(
     x: number,
@@ -250,6 +681,13 @@ export class NgxExplorerContainerDirective<T = any>
       event.preventDefault();
       return;
     }
+
+    // List of the current registered elements
+    if (this.sortingEnabled) {
+      this.unsortedItems = this.createUnsortedList();
+      this.sortedItems = this.getSortedItems();
+    }
+
     this.dragStarted = true;
 
     this._currentDragElement = this.getTargetHandle(event) || null;
@@ -298,14 +736,22 @@ export class NgxExplorerContainerDirective<T = any>
     if (this.dragStarted) {
       if (this.isMinRangeMoved(event.x, event.y)) {
         this.canMove = true;
+
+        const htmlElement = this._currentDragElement?.htmlElement;
+        if (htmlElement) this.toggleVisibility(htmlElement, true);
       }
 
       if (!this.canMove) return;
+      if (this.sortingEnabled) {
+        this.setCurrentPositionOfDraggedElement(
+          this._currentDragElement?.htmlElement,
+          { x: event.x, y: event.y }
+        );
+      }
 
       this.setPreviewElementPosition(event.x, event.y);
-      event.stopPropagation();
-      event.preventDefault();
     }
+
     event.stopPropagation();
     event.preventDefault();
   };
@@ -313,44 +759,72 @@ export class NgxExplorerContainerDirective<T = any>
   private onMouseUp = (event: any) => {
     this.dragStarted = false;
     this.canMove = false;
+    let indexData: any;
 
     if (this.previewElement) {
+      if (this._currentDragElement && this.sortingEnabled) {
+        indexData = this.getCurrentIndexPosition(
+          event.x,
+          event.y,
+          this._currentDragElement?.htmlElement
+        );
+
+        this.positionDifference = { left: indexData?.x, top: indexData?.y };
+      }
+
       this.previewElement.style.transition = '0.2s ease-in-out';
 
       let posX =
         (+this.previewElement.style.left.replace('px', '').trim() -
-          this.position.left) *
+          (this.positionDifference
+            ? this.positionDifference.left
+            : this.position.left)) *
         -1;
       let posY =
         (+this.previewElement.style.top.replace('px', '').trim() -
-          this.position.top) *
+          (this.positionDifference
+            ? this.positionDifference.top
+            : this.position.top)) *
         -1;
 
       this.previewElement.style.transform =
         'translate(' + posX + 'px, ' + posY + 'px)';
 
-      this.drop.emit({
-        item: this._currentDragElement?.data,
-        target: this._currentTargetElement?.data,
-        optionalDragData: this.dragData,
-      });
-
-      this.dndService.setCurrentDragElement(null);
-      this._currentDragElement = null;
-      this._currentTargetElement = null;
-
       event.preventDefault();
       event.stopPropagation();
-      if (!this.cancelAnimation) {
-        setTimeout(() => {
+
+      setTimeout(
+        () => {
+          this.drop.emit({
+            item: this._currentDragElement?.data,
+            target: this._currentTargetElement?.data,
+            optionalDragData: this.dragData,
+            oldIndex: indexData ? indexData.oldIndex : null,
+            newIndex: indexData ? indexData.newIndex : null,
+          });
+
+          // Clear positionDifference
+          this.positionDifference = null;
+
           if (this.previewElement)
             this._document.body.removeChild(this.previewElement);
           this.previewElement = null;
-        }, 201);
-      } else {
-        this._document.body.removeChild(this.previewElement);
-        this.previewElement = null;
-      }
+
+          const htmlElement = this._currentDragElement?.htmlElement;
+
+          if (htmlElement) {
+            this.toggleVisibility(htmlElement, false);
+          }
+
+          this.resetPositions(this._currentDragElement?.htmlElement);
+
+          this.dndService.setCurrentDragElement(null);
+          this._currentDragElement = null;
+          this._currentTargetElement = null;
+        },
+        this.cancelAnimation ? 0 : 201
+      );
+
       this.dragInProgress.emit(false);
     }
   };

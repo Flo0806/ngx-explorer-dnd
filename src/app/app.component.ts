@@ -1,5 +1,5 @@
 import { Component, QueryList, ViewChildren } from '@angular/core';
-import { FileFolder } from 'ngx-explorer-dnd';
+import { FileFolder, moveItemInArray } from 'ngx-explorer-dnd';
 
 @Component({
   selector: 'app-root',
@@ -8,7 +8,7 @@ import { FileFolder } from 'ngx-explorer-dnd';
 })
 export class AppComponent {
   directories = ['Folder 1', 'Folder 2', 'Folder 3', 'Folder 4'];
-  files = ['File 1', 'File 2', 'File 3', 'File 4'];
+  files: any[] = []; // ['File 1', 'File 2', 'File 3', 'File 4'];
 
   myElement!: HTMLElement;
 
@@ -24,6 +24,10 @@ export class AppComponent {
     // this.myElement.style.width = '100px';
     // this.myElement.style.height = '100px';
     // this.myElement.style.backgroundColor = 'green';
+
+    for (let i = 1; i < 30; i++) {
+      this.files.push('File ' + i.toString());
+    }
   }
 
   dragInProgress(event: boolean) {
@@ -42,5 +46,8 @@ export class AppComponent {
 
   drop(event: any) {
     console.log(event);
+    if (event.oldIndex !== null) {
+      moveItemInArray(this.files, event.oldIndex, event.newIndex);
+    }
   }
 }
