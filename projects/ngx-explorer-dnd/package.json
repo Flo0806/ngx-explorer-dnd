@@ -7,11 +7,11 @@
     "url": "https://github.com/Flo0806/ngx-explorer-dnd.git"
   },
   "license": "MIT",
-  "version": "1.0.0-alpha.10",
+  "version": "1.0.0-alpha.11",
   "peerDependencies": {
-    "@angular/common": "^15.0.0",
-    "@angular/core": "^15.0.0",
-    "@angular/cdk": "15.0.0"
+    "@angular/common": "^9.1.11",
+    "@angular/core": "^9.1.11",
+    "@angular/cdk": "9.1.11"
   },
   "dependencies": {
     "tslib": "^2.3.0"
